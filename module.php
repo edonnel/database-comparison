@@ -8,10 +8,10 @@
 	define('THIS_URL_FULL', returnURL().'/admin/'.THIS_URL);
 
     require_once THIS_DIR.'/_config.php';
-	require_once dirname(THIS_DIR).'/_src/php/result.class.php';
-	require_once dirname(THIS_DIR).'/_src/php/changes.class.php';
-	require_once THIS_DIR.'/src/php/database.class.php';
-	require_once THIS_DIR.'/src/php/mysqli_builder.class.php';
+	require_once THIS_DIR.'/src/php/classes/result.class.php';
+	require_once THIS_DIR.'/src/php/classes/changes.class.php';
+	require_once THIS_DIR.'/src/php/classes/database.class.php';
+	require_once THIS_DIR.'/src/php/classes/mysqli_builder.class.php';
 
 	$database_prod = new \database\database(db_cred_prod['host'], db_cred_prod['user'], db_cred_prod['pass'], db_cred_prod['name']);
 	$database_stag = new \database\database(db_cred_stag['host'], db_cred_stag['user'], db_cred_stag['pass'], db_cred_stag['name']);
