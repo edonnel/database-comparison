@@ -1,7 +1,14 @@
 <?
-	if (session_status() === PHP_SESSION_NONE)
-		@session_start();
+	// start the session
+	start_the_session();
 
+	// security
+	$validate_csrf = csrf::validate($_SESSION['csrf_token']);
+
+	if (!$validate_csrf['success'])
+		alerts::push($validate_csrf['msg'], 'Error', 'error', false, true);
+
+	// valid GET['act']
 	$push_acts = array(
 		'push_table',
 		'push_column',
@@ -18,20 +25,20 @@
 
 	$valid_acts = array_merge($push_acts, $drop_acts);
 
-	if (in_array($_GET['act'], $valid_acts)) {
+	if (isset($_GET['act']) && in_array($_GET['act'], $valid_acts)) {
 
 		if (!$_GET['table'])
-			log_message_redirect('Table was not specified.', 'error', 'Error', THIS_URL_FULL);
+			alerts::push('Table was not specified.', 'Error', 'error', THIS_URL_FULL);
 
 		$table_name = $_GET['table'];
 
 		if (in_array($_GET['act'], $push_acts)) {
 
 			if (!($db_src_name = $_GET['db_src']))
-				log_message_redirect('Source database was not specified.', 'error', 'Error', THIS_URL_FULL);
+				alerts::push('Source database was not specified.', 'Error', 'error', THIS_URL_FULL);
 
 			if (!($db_dest_name = $_GET['db_dest']))
-				log_message_redirect('Destination database was not specified.', 'error', 'Error', THIS_URL_FULL);
+				alerts::push('Destination database was not specified.', 'Error', 'error', THIS_URL_FULL);
 
 			$db_src       = get_db_from_name($db_src_name);
 			$db_dest      = get_db_from_name($db_dest_name);
@@ -105,12 +112,12 @@
 					if ($result->is_success()) {
 						$_SESSION['last_stmt'] = $stmt;
 
-						log_action('Pushed the table "'.$table_name.'" from database "'.$db_src_name.'" to database "'.$db_dest_name.'"');
-						log_message_redirect('Table <b>'.$table_name.'</b> pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>.', 'success', 'Table Pushed', THIS_URL_FULL);
+//						log_action('Pushed the table "'.$table_name.'" from database "'.$db_src_name.'" to database "'.$db_dest_name.'"');
+						alerts::push('Table <b>'.$table_name.'</b> pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>.', 'Table Pushed', 'success', THIS_URL_FULL);
 					} else
-						log_message_redirect('Table <b>'.$table_name.'</b> could not be pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>.<br><br>Error: '.$result->get_data('error').'<br><br>Statement:<br><pre>'.$stmt.'</pre>', 'error', 'Table Push Error', THIS_URL_FULL);
+						alerts::push('Table <b>'.$table_name.'</b> could not be pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>.<br><br>Error: '.$result->get_data('error').'<br><br>Statement:<br><pre>'.$stmt.'</pre>', 'Table Push Error', 'error', THIS_URL_FULL);
 				} else
-					log_message_redirect('Table <b>'.$table_name.'</b> could not be pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>. Table does not exist on source database.', 'error', 'Table Push Error', THIS_URL_FULL);
+					alerts::push('Table <b>'.$table_name.'</b> could not be pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>. Table does not exist on source database.', 'Table Push Error', 'error', THIS_URL_FULL);
 			}
 
 			/*-- PUSH COLUMN --*/
@@ -118,7 +125,7 @@
 			if ($_GET['act'] == 'push_column') {
 
 				if (!($column_name = $_GET['column']))
-					log_message_redirect('Column was not specified.', 'error', 'Error', THIS_URL_FULL);
+					alerts::push('Column was not specified.', 'Error', 'error', THIS_URL_FULL);
 
 				$builder = new \sql\builder($conn_dest);
 
@@ -138,14 +145,14 @@
 						if ($result->is_success()) {
 							$_SESSION['last_stmt'] = $stmt;
 
-							log_action('Pushed the column "'.$column_name.'" on table "'.$table_name.'" from database "'.$db_src_name.'" to database "'.$db_dest_name.'"');
-							log_message_redirect('Column <b>'.$column_name.'</b> on table <b>'.$table_name.'</b> pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>.', 'success', 'Column Pushed', THIS_URL_FULL);
+//							log_action('Pushed the column "'.$column_name.'" on table "'.$table_name.'" from database "'.$db_src_name.'" to database "'.$db_dest_name.'"');
+							alerts::push('Column <b>'.$column_name.'</b> on table <b>'.$table_name.'</b> pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>.', 'Column Pushed', 'success', THIS_URL_FULL);
 						} else
-							log_message_redirect('Column <b>'.$column_name.'</b> on table <b>'.$table_name.'</b> could not be pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>.<br><br>Error: '.$result->get_data('error').'<br><br>Statement:<br><pre>'.$stmt.'</pre>', 'error', 'Column Push Error', THIS_URL_FULL);
+							alerts::push('Column <b>'.$column_name.'</b> on table <b>'.$table_name.'</b> could not be pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>.<br><br>Error: '.$result->get_data('error').'<br><br>Statement:<br><pre>'.$stmt.'</pre>', 'Column Push Error', 'error', THIS_URL_FULL);
 					} else
-						log_message_redirect('Column <b>'.$column_name.'</b> on table <b>'.$table_name.'</b> could not be pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>. Column does not exist on source database', 'error', 'Column Push Error', THIS_URL_FULL);
+						alerts::push('Column <b>'.$column_name.'</b> on table <b>'.$table_name.'</b> could not be pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>. Column does not exist on source database', 'Column Push Error', 'error', THIS_URL_FULL);
 				} else
-					log_message_redirect('Column <b>'.$column_name.'</b> on table <b>'.$table_name.'</b> could not be pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>. Table does not exist on destination database', 'error', 'Column Push Error', THIS_URL_FULL);
+					alerts::push('Column <b>'.$column_name.'</b> on table <b>'.$table_name.'</b> could not be pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>. Table does not exist on destination database', 'Column Push Error', 'error', THIS_URL_FULL);
 			}
 
 			/*-- PUSH INDEX --*/
@@ -153,7 +160,7 @@
 			if ($_GET['act'] == 'push_index') {
 
 				if (!($index_name = $_GET['index']))
-					log_message_redirect('Index was not specified.', 'error', 'Error', THIS_URL_FULL);
+					alerts::push('Index was not specified.', 'Error', 'error', THIS_URL_FULL);
 
 				if ($table_dest) {
 
@@ -173,14 +180,14 @@
 						if ($result->is_success()) {
 							$_SESSION['last_stmt'] = $stmt;
 
-							log_action('Pushed the index "'.$index_name.'" on table "'.$table_name.'" from database "'.$db_src_name.'" to database "'.$db_dest_name.'"');
-							log_message_redirect('Index <b>'.$index_name.'</b> on table <b>'.$table_name.'</b> pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>.', 'success', 'Index Pushed', THIS_URL_FULL);
+//							log_action('Pushed the index "'.$index_name.'" on table "'.$table_name.'" from database "'.$db_src_name.'" to database "'.$db_dest_name.'"');
+							alerts::push('Index <b>'.$index_name.'</b> on table <b>'.$table_name.'</b> pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>.', 'Index Pushed', 'success', THIS_URL_FULL);
 						} else
-							log_message_redirect('Index <b>'.$index_name.'</b> on table <b>'.$table_name.'</b> could not be pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>.<br><br>Error: '.$result->get_data('error').'<br><br>Statement:<br><pre>'.$stmt.'</pre>', 'error', 'Index Push Error', THIS_URL_FULL);
+							alerts::push('Index <b>'.$index_name.'</b> on table <b>'.$table_name.'</b> could not be pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>.<br><br>Error: '.$result->get_data('error').'<br><br>Statement:<br><pre>'.$stmt.'</pre>', 'Index Push Error', 'error', THIS_URL_FULL);
 					} else
-						log_message_redirect('Index <b>'.$index_name.'</b> on table <b>'.$table_name.'</b> could not be pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>. Index does not exist on source database.', 'error', 'Index Push Error', THIS_URL_FULL);
+						alerts::push('Index <b>'.$index_name.'</b> on table <b>'.$table_name.'</b> could not be pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>. Index does not exist on source database.', 'Index Push Error', 'error', THIS_URL_FULL);
 				} else
-					log_message_redirect('Index <b>'.$index_name.'</b> on table <b>'.$table_name.'</b> could not be pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>. Table does not exist on destination database.', 'error', 'Index Push Error', THIS_URL_FULL);
+					alerts::push('Index <b>'.$index_name.'</b> on table <b>'.$table_name.'</b> could not be pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>. Table does not exist on destination database.', 'Index Push Error', 'error', THIS_URL_FULL);
 			}
 
 			/*-- PUSH CONSTRAINT --*/
@@ -188,7 +195,7 @@
 			if ($_GET['act'] == 'push_constraint') {
 
 				if (!($constraint_name = $_GET['constraint']))
-					log_message_redirect('Constraint was not specified.', 'error', 'Error', THIS_URL_FULL);
+					alerts::push('Constraint was not specified.', 'Error', 'error', THIS_URL_FULL);
 
 				if ($table_dest) {
 
@@ -208,21 +215,21 @@
 						if ($result->is_success()) {
 							$_SESSION['last_stmt'] = $stmt;
 
-							log_action('Pushed the constraint "'.$constraint_name.'" on table "'.$table_name.'" from database "'.$db_src_name.'" to database "'.$db_dest_name.'"');
-							log_message_redirect('Constraint <b>'.$constraint_name.'</b> on table <b>'.$table_name.'</b> pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>.', 'success', 'Constraint Pushed', THIS_URL_FULL);
+//							log_action('Pushed the constraint "'.$constraint_name.'" on table "'.$table_name.'" from database "'.$db_src_name.'" to database "'.$db_dest_name.'"');
+							alerts::push('Constraint <b>'.$constraint_name.'</b> on table <b>'.$table_name.'</b> pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>.', 'Constraint Pushed', 'success', THIS_URL_FULL);
 						} else
-							log_message_redirect('Constraint <b>'.$constraint_name.'</b> on table <b>'.$table_name.'</b> could not be pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>.<br><br>Error: '.$result->get_data('stmt').'<br><br>Statement:<br><pre>'.$stmt.'</pre>', 'error', 'Constraint Push Error', THIS_URL_FULL);
+							alerts::push('Constraint <b>'.$constraint_name.'</b> on table <b>'.$table_name.'</b> could not be pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>.<br><br>Error: '.$result->get_data('stmt').'<br><br>Statement:<br><pre>'.$stmt.'</pre>', 'Constraint Push Error', 'error', THIS_URL_FULL);
 					} else
-						log_message_redirect('Constraint <b>'.$constraint_name.'</b> on table <b>'.$table_name.'</b> could not be pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>. Index does not exist on source database.', 'error', 'Constraint Push Error', THIS_URL_FULL);
+						alerts::push('Constraint <b>'.$constraint_name.'</b> on table <b>'.$table_name.'</b> could not be pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>. Index does not exist on source database.', 'Constraint Push Error', 'error', THIS_URL_FULL);
 				} else
-					log_message_redirect('Constraint <b>'.$constraint_name.'</b> on table <b>'.$table_name.'</b> could not be pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>. Table does not exist on destination database.', 'error', 'Constraint Push Error', THIS_URL_FULL);
+					alerts::push('Constraint <b>'.$constraint_name.'</b> on table <b>'.$table_name.'</b> could not be pushed from database <b>'.$db_src_name.'</b> to database <b>'.$db_dest_name.'</b>. Table does not exist on destination database.', 'Constraint Push Error', 'error', THIS_URL_FULL);
 			}
 		}
 
 		if (in_array($_GET['act'], $drop_acts)) {
 
 			if (!$_GET['db'])
-				log_message_redirect('Database was not specified.', 'error', 'Error', THIS_URL_FULL);
+				alerts::push('Database was not specified.', 'Error', 'error', THIS_URL_FULL);
 
 			$db_name = $_GET['db'];
 			$conn    = get_conn_from_db_name($db_name);
@@ -241,10 +248,10 @@
 				if ($result->is_success()) {
 					$_SESSION['last_stmt'] = $stmt;
 
-					log_action('Dropped the table "'.$table_name.'" from database "'.$db_name.'"');
-					log_message_redirect('Table <b>'.$table_name.'</b> dropped from database <b>'.$db_name.'</b>.', 'success', 'Table Dropped', THIS_URL_FULL);
+//					log_action('Dropped the table "'.$table_name.'" from database "'.$db_name.'"');
+					alerts::push('Table <b>'.$table_name.'</b> dropped from database <b>'.$db_name.'</b>.', 'Table Dropped', 'success', THIS_URL_FULL);
 				} else
-					log_message_redirect('Table <b>'.$table_name.'</b> could not be dropped from database <b>'.$db_name.'</b>.<br><br>Error: '.$result->get_data('stmt').'<br><br>Statement:<br><pre>'.$stmt.'</pre>', 'error', 'Table Drop Error', THIS_URL_FULL);
+					alerts::push('Table <b>'.$table_name.'</b> could not be dropped from database <b>'.$db_name.'</b>.<br><br>Error: '.$result->get_data('stmt').'<br><br>Statement:<br><pre>'.$stmt.'</pre>', 'Table Drop Error', 'error', THIS_URL_FULL);
 			}
 
 			/*-- DROP COLUMN --*/
@@ -252,7 +259,7 @@
 			if ($_GET['act'] == 'drop_column') {
 
 				if (!($column_name = $_GET['column']))
-					log_message_redirect('Column was not specified.', 'error', 'Error', THIS_URL_FULL);
+					alerts::push('Column was not specified.', 'Error', 'error', THIS_URL_FULL);
 
 				$builder->add_stmt("ALTER TABLE `$db_name`.`$table_name` DROP COLUMN `$column_name`");
 
@@ -262,10 +269,10 @@
 				if ($result->is_success()) {
 					$_SESSION['last_stmt'] = $stmt;
 
-					log_action('Dropped the column "'.$column_name.'" on table "'.$table_name.'" from database "'.$db_name.'"');
-					log_message_redirect('Column <b>'.$column_name.'</b> on table <b>'.$table_name.'</b> dropped from database <b>'.$db_name.'</b>.', 'success', 'Table Dropped', THIS_URL_FULL);
+//					log_action('Dropped the column "'.$column_name.'" on table "'.$table_name.'" from database "'.$db_name.'"');
+					alerts::push('Column <b>'.$column_name.'</b> on table <b>'.$table_name.'</b> dropped from database <b>'.$db_name.'</b>.', 'Table Dropped', 'success', THIS_URL_FULL);
 				} else
-					log_message_redirect('Column <b>'.$column_name.'</b> on table <b>'.$table_name.'</b> could not be dropped from database <b>'.$db_name.'</b>.<br><br>Error: '.$result->get_data('stmt').'<br><br>Statement:<br><pre>'.$stmt.'</pre>', 'error', 'Table Drop Error', THIS_URL_FULL);
+					alerts::push('Column <b>'.$column_name.'</b> on table <b>'.$table_name.'</b> could not be dropped from database <b>'.$db_name.'</b>.<br><br>Error: '.$result->get_data('stmt').'<br><br>Statement:<br><pre>'.$stmt.'</pre>', 'Table Drop Error', 'error', THIS_URL_FULL);
 			}
 
 			/*-- DROP INDEX --*/
@@ -273,7 +280,7 @@
 			if ($_GET['act'] == 'drop_index') {
 
 				if (!($index_name = $_GET['index']))
-					log_message_redirect('Index was not specified.', 'error', 'Error', THIS_URL_FULL);
+					alerts::push('Index was not specified.', 'Error', 'error', THIS_URL_FULL);
 
 				$builder->add_stmt("ALTER TABLE `$db_name`.`$table_name` DROP INDEX `$index_name`");
 
@@ -283,10 +290,10 @@
 				if ($result->is_success()) {
 					$_SESSION['last_stmt'] = $stmt;
 
-					log_action('Dropped the index "'.$index_name.'" on table "'.$table_name.'" from database "'.$db_name.'"');
-					log_message_redirect('Index <b>'.$index_name.'</b> on table <b>'.$table_name.'</b> dropped from database <b>'.$db_name.'</b>.', 'success', 'Index Dropped', THIS_URL_FULL);
+//					log_action('Dropped the index "'.$index_name.'" on table "'.$table_name.'" from database "'.$db_name.'"');
+					alerts::push('Index <b>'.$index_name.'</b> on table <b>'.$table_name.'</b> dropped from database <b>'.$db_name.'</b>.', 'Index Dropped', 'success', THIS_URL_FULL);
 				} else
-					log_message_redirect('Index <b>'.$index_name.'</b> on table <b>'.$table_name.'</b> could not be dropped from database <b>'.$db_name.'</b>.<br><br>Error: '.$result->get_data('error').'<br><br>Statement:<br><pre>'.$stmt.'</pre>', 'error', 'Index Drop Error', THIS_URL_FULL);
+					alerts::push('Index <b>'.$index_name.'</b> on table <b>'.$table_name.'</b> could not be dropped from database <b>'.$db_name.'</b>.<br><br>Error: '.$result->get_data('error').'<br><br>Statement:<br><pre>'.$stmt.'</pre>', 'Index Drop Error', 'error', THIS_URL_FULL);
 			}
 
 			/*-- DROP CONSTRAINT --*/
@@ -294,7 +301,7 @@
 			if ($_GET['act'] == 'drop_constraint') {
 
 				if (!($constraint_name = $_GET['constraint']))
-					log_message_redirect('Constraint was not specified.', 'error', 'Error', THIS_URL_FULL);
+					alerts::push('Constraint was not specified.', 'Error', 'error', THIS_URL_FULL);
 
 				$builder->add_stmt("ALTER TABLE `$db_name`.`$table_name` DROP FOREIGN KEY `$constraint_name`");
 
@@ -304,17 +311,12 @@
 				if ($result->is_success()) {
 					$_SESSION['last_stmt'] = $stmt;
 
-					log_action('Dropped the constraint "'.$constraint_name.'" on table "'.$table_name.'" from database "'.$db_name.'"');
-					log_message_redirect('Constraint <b>'.$constraint_name.'</b> on table <b>'.$table_name.'</b> dropped from database <b>'.$db_name.'</b>.', 'success', 'Constraint Dropped', THIS_URL_FULL);
+//					log_action('Dropped the constraint "'.$constraint_name.'" on table "'.$table_name.'" from database "'.$db_name.'"');
+					alerts::push('Constraint <b>'.$constraint_name.'</b> on table <b>'.$table_name.'</b> dropped from database <b>'.$db_name.'</b>.', 'Constraint Dropped', 'success', THIS_URL_FULL);
 				} else
-					log_message_redirect('Constraint <b>'.$constraint_name.'</b> on table <b>'.$table_name.'</b> could not be dropped from database <b>'.$db_name.'</b>.<br><br>Error: '.$result->get_data('error').'<br><br>Statement:<br><pre>'.$stmt.'</pre>', 'error', 'Constraint Drop Error', THIS_URL_FULL);
+					alerts::push('Constraint <b>'.$constraint_name.'</b> on table <b>'.$table_name.'</b> could not be dropped from database <b>'.$db_name.'</b>.<br><br>Error: '.$result->get_data('error').'<br><br>Statement:<br><pre>'.$stmt.'</pre>', 'Constraint Drop Error', 'error', THIS_URL_FULL);
 			}
 		}
 	}
 
 	// TODO: make push alls
-
-	if (isset($_SESSION['log_msg'])) {
-		log_message($_SESSION['log_msg']['text'], $_SESSION['log_msg']['type'], $_SESSION['log_msg']['title']);
-		unset($_SESSION['log_msg']);
-	}
