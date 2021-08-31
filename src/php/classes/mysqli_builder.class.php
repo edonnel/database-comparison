@@ -1,85 +1,83 @@
 <?
+	namespace database_comparison;
 
-	namespace sql {
+	class sql_builder {
+		private $conn;
+		private $statements = array();
 
-		class builder {
-			private $conn;
-			private $statements = array();
+		public function __construct(\mysqli $conn) {
+			$this->conn = $conn;
 
-			public function __construct(\mysqli $conn) {
-				$this->conn = $conn;
+			return $this;
+		}
 
-				return $this;
-			}
+		public function set_conn(\mysqli $conn) {
+			if (!$conn)
+				die('Database connection error. '.mysqli_connect_error());
 
-			public function set_conn(\mysqli $conn) {
-				if (!$conn)
-					die('Database connection error. '.mysqli_connect_error());
+			$this->conn = $conn;
 
-				$this->conn = $conn;
+			return $this;
+		}
 
-				return $this;
-			}
+		public function add_stmt($stmt) {
+			$this->statements[] = $stmt;
 
-			public function add_stmt($stmt) {
-				$this->statements[] = $stmt;
+			return $this;
+		}
 
-				return $this;
-			}
+		public function prepend_stmt($stmt) {
+			array_unshift($this->statements, $stmt);
 
-			public function prepend_stmt($stmt) {
-				array_unshift($this->statements, $stmt);
+			return $this;
+		}
 
-				return $this;
-			}
+		private function build_stmt() : string {
+			$this->prepend_stmt("START TRANSACTION");
+			$this->prepend_stmt("SET AUTOCOMMIT = 0");
+			$this->prepend_stmt("SET SQL_MODE = 'NO_AUTO_VALUE_ON_ZERO'");
 
-			private function build_stmt() : string {
-				$this->prepend_stmt("START TRANSACTION");
-				$this->prepend_stmt("SET AUTOCOMMIT = 0");
-				$this->prepend_stmt("SET SQL_MODE = 'NO_AUTO_VALUE_ON_ZERO'");
+			$this->add_stmt("COMMIT");
 
-				$this->add_stmt("COMMIT");
+			$stmt = implode("\r", array_map(function ($x) {
+				return ($x.';');
+			}, $this->statements));
 
-				$stmt = implode("\r", array_map(function ($x) {
-					return ($x.';');
-				}, $this->statements));
+			return $stmt;
+		}
 
-				return $stmt;
-			}
+		public function exec() : \result {
+			$stmt = $this->build_stmt();
 
-			public function exec() : \result {
-				$stmt = $this->build_stmt();
+			$query = mysqli_multi_query($this->conn, $stmt);
 
-				$query = mysqli_multi_query($this->conn, $stmt);
+			$result = new \result;
+			$result->set_data('stmt', $stmt);
 
-				$result = new \result;
-				$result->set_data('stmt', $stmt);
+			if ($query) {
 
-				if ($query) {
+				do {
+					if (!mysqli_more_results($this->conn)) {
+						$result->set_success(true);
 
-					do {
-						if (!mysqli_more_results($this->conn)) {
-							$result->set_success(true);
+						return $result;
+					}
 
-							return $result;
-						}
+					if (!mysqli_next_result($this->conn) || mysqli_errno($this->conn)) {
+						$result
+							->set_success(false)
+							->set_data('error', mysqli_error($this->conn));
 
-						if (!mysqli_next_result($this->conn) || mysqli_errno($this->conn)) {
-							$result
-								->set_success(false)
-								->set_data('error', mysqli_error($this->conn));
+						return $result;
+					}
+				} while(true);
 
-							return $result;
-						}
-					} while(true);
+			} else {
+				$result
+					->set_success(false)
+					->set_data('error', mysqli_error($this->conn));
 
-				} else {
-					$result
-						->set_success(false)
-						->set_data('error', mysqli_error($this->conn));
-
-					return $result;
-				}
+				return $result;
 			}
 		}
 	}
