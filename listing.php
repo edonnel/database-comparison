@@ -31,10 +31,10 @@
 
     <div class="section-tables db-cols">
         <div class="db-col">
-            <? render_tables($database_stag, $database_prod, 'table changes on staging', 'left'); ?>
+            <? \database_comparison\render_tables($database_stag, $database_prod, 'table changes on staging', 'left'); ?>
         </div>
         <div class="db-col">
-            <? render_tables($database_prod, $database_stag, 'table changes on production', 'right'); ?>
+            <? \database_comparison\render_tables($database_prod, $database_stag, 'table changes on production', 'right'); ?>
         </div>
     </div>
 
@@ -42,10 +42,10 @@
 
     <div class="section-columns db-cols">
         <div class="db-col">
-            <? render_columns($database_stag, $database_prod, 'column changes on staging', 'left'); ?>
+            <? \database_comparison\render_columns($database_stag, $database_prod, 'column changes on staging', 'left'); ?>
         </div>
         <div class="db-col">
-            <? render_columns($database_prod, $database_stag, 'column changes on production', 'right'); ?>
+            <? \database_comparison\render_columns($database_prod, $database_stag, 'column changes on production', 'right'); ?>
         </div>
     </div>
 
@@ -53,10 +53,10 @@
 
     <div class="section-indexes db-cols">
         <div class="db-col">
-            <? render_indexes($database_stag, $database_prod, 'index changes on staging', 'left'); ?>
+            <? \database_comparison\render_indexes($database_stag, $database_prod, 'index changes on staging', 'left'); ?>
         </div>
         <div class="db-col">
-            <? render_indexes($database_prod, $database_stag, 'index changes on production', 'right'); ?>
+            <? \database_comparison\render_indexes($database_prod, $database_stag, 'index changes on production', 'right'); ?>
         </div>
     </div>
 
@@ -65,12 +65,12 @@
     <div class="section-constraints db-cols">
         <div class="db-col">
             <div class="table-container">
-                <? render_constraints($database_stag, $database_prod, 'constraint changes on staging', 'left'); ?>
+                <? \database_comparison\render_constraints($database_stag, $database_prod, 'constraint changes on staging', 'left'); ?>
             </div>
         </div>
         <div class="db-col">
             <div class="table-container">
-                <? render_constraints($database_prod, $database_stag, 'constraint changes on production', 'right'); ?>
+                <? \database_comparison\render_constraints($database_prod, $database_stag, 'constraint changes on production', 'right'); ?>
             </div>
         </div>
     </div>

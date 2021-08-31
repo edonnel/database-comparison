@@ -10,7 +10,7 @@
 	require_once THIS_DIR.'/src/php/functions.php';
 
 	// start the session
-	start_the_session();
+	\database_comparison\start_the_session();
 
 	define('THIS_URL', '?a='.$_GET['a']);
 	define('THIS_URL_FULL', returnURL().'/admin/'.THIS_URL);
@@ -23,14 +23,14 @@
 	require_once THIS_DIR.'/src/php/classes/database.class.php';
 	require_once THIS_DIR.'/src/php/classes/mysqli_builder.class.php';
 
-	$database_prod = new \database\database(db_cred_prod['host'], db_cred_prod['user'], db_cred_prod['pass'], db_cred_prod['name']);
-	$database_stag = new \database\database(db_cred_stag['host'], db_cred_stag['user'], db_cred_stag['pass'], db_cred_stag['name']);
+	$database_prod = new \database_comparison\database(db_cred_prod['host'], db_cred_prod['user'], db_cred_prod['pass'], db_cred_prod['name']);
+	$database_stag = new \database_comparison\database(db_cred_stag['host'], db_cred_stag['user'], db_cred_stag['pass'], db_cred_stag['name']);
 
 	$GLOBALS['database_prod'] = $database_prod;
 	$GLOBALS['database_stag'] = $database_stag;
 
 	// start csrf
-	csrf::init();
+	\csrf::init();
 
     require_once THIS_DIR.'/process.php';
     require_once THIS_DIR.'/listing.php';
