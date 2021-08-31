@@ -48,20 +48,6 @@
 		}
 	}
 
-	function log_message_redirect($text, $type, $title, $redirect) {
-		if (session_status() === PHP_SESSION_NONE)
-			session_start();
-
-		$_SESSION['log_msg'] = array(
-			'text'  => $text,
-			'type'  => $type,
-			'title' => $title,
-		);
-
-		header('Location: '.$redirect);
-		die();
-	}
-
 	function get_db_from_name($db_name) : \database\database {
 		global $database_prod, $database_stag;
 
@@ -82,4 +68,9 @@
 			return mysqli_connect(db_cred_stag['host'], db_cred_stag['user'], db_cred_stag['pass'], db_cred_stag['name']);
 
 		die('Database specified was not valid.');
+	}
+
+	function start_the_session() {
+		if (session_status() === PHP_SESSION_NONE)
+			@session_start();
 	}
